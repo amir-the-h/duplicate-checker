@@ -20,13 +20,20 @@ jobs:
         run: |
           PR_TITLE="${{ github.event.pull_request.title }}"
           LATEST_TAG=$(git describe --tags --abbrev=0)
+          MAJOR=$(echo $LATEST_TAG | awk -F. '{print $1}')
+          MINOR=$(echo $LATEST_TAG | awk -F. '{print $2}')
+          PATCH=$(echo $LATEST_TAG | awk -F. '{print $3}')
+          
           if [[ $PR_TITLE == *MINOR_RELEASE* ]]; then
-            VERSION=$(echo $LATEST_TAG | awk -F. '{$2++; print $0}')
+            MINOR=$((MINOR + 1))
+            PATCH=0
           elif [[ $PR_TITLE == *MAJOR_RELEASE* ]]; then
-            VERSION=$(echo $LATEST_TAG | awk -F. '{$1++; print $0}')
-          else
-            VERSION=$LATEST_TAG
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
           fi
+          
+          VERSION="$MAJOR.$MINOR.$PATCH"
           echo "::set-output name=version::$VERSION"
 
       - name: Create or update version release
