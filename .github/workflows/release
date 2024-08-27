@@ -1,0 +1,70 @@
+name: Release Workflow
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  release:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Determine release version
+        id: determine_version
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          LATEST_TAG=$(git describe --tags --abbrev=0)
+          if [[ $PR_TITLE == *MINOR_RELEASE* ]]; then
+            VERSION=$(echo $LATEST_TAG | awk -F. '{$2++; print $0}')
+          elif [[ $PR_TITLE == *MAJOR_RELEASE* ]]; then
+            VERSION=$(echo $LATEST_TAG | awk -F. '{$1++; print $0}')
+          else
+            VERSION=$LATEST_TAG
+          fi
+          echo "::set-output name=version::$VERSION"
+
+      - name: Create or update version release
+        id: create_version_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ steps.determine_version.outputs.version }}
+          release_name: Release ${{ steps.determine_version.outputs.version }}
+          draft: false
+          prerelease: false
+
+      - name: Check if latest release exists
+        id: check_latest_release
+        run: |
+          LATEST_RELEASE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/${{ github.repository }}/releases/tags/latest)
+          if echo "$LATEST_RELEASE" | grep -q "Not Found"; then
+            echo "::set-output name=exists::false"
+          else
+            echo "::set-output name=exists::true"
+          fi
+
+      - name: Create or update latest release
+        if: steps.check_latest_release.outputs.exists == 'false'
+        id: create_latest_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: latest
+          release_name: Latest Release
+          draft: false
+          prerelease: false
+
+      - name: Update latest release
+        if: steps.check_latest_release.outputs.exists == 'true'
+        run: |
+          LATEST_RELEASE_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/${{ github.repository }}/releases/tags/latest | jq -r .id)
+          curl -X PATCH -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"tag_name": "latest", "name": "Latest Release", "draft": false, "prerelease": false}' \
+            https://api.github.com/repos/${{ github.repository }}/releases/$LATEST_RELEASE_ID
