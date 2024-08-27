@@ -63,6 +63,8 @@ jobs:
         with:
           tag: latest
           title: Latest Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update latest release
         if: steps.check_latest_release.outputs.exists == 'true'
