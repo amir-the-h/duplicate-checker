@@ -43,13 +43,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag: ${{ VERSION }}
-          title: Release ${{ VERSION }}
+          tag: ${{ env.VERSION }}
+          title: Release ${{ env.VERSION }}
 
       - name: Push new tag
         run: |
-          git tag ${{ VERSION }}
-          git push origin ${{ VERSION }}
+          git tag ${{ env.VERSION }}
+          git push origin ${{ env.VERSION }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
