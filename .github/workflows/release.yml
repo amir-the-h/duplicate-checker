@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Determine release version
         id: determine_version
@@ -38,13 +38,12 @@ jobs:
 
       - name: Create or update version release
         id: create_version_release
-        uses: actions/create-release@v1
+        uses: elgohr/Github-Release-Action@v5
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.determine_version.outputs.version }}
-          release_name: Release ${{ steps.determine_version.outputs.version }}
-          draft: false
-          prerelease: false
-          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ steps.determine_version.outputs.version }}
+          title: Release ${{ steps.determine_version.outputs.version }}
 
       - name: Check if latest release exists
         id: check_latest_release
@@ -60,13 +59,10 @@ jobs:
       - name: Create or update latest release
         if: steps.check_latest_release.outputs.exists == 'false'
         id: create_latest_release
-        uses: actions/create-release@v1
+        uses: elgohr/Github-Release-Action@v5
         with:
-          tag_name: latest
-          release_name: Latest Release
-          draft: false
-          prerelease: false
-          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: latest
+          title: Latest Release
 
       - name: Update latest release
         if: steps.check_latest_release.outputs.exists == 'true'
