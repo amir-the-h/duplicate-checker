@@ -35,8 +35,7 @@ jobs:
             PATCH=$((PATCH + 1))
           fi
           
-          VERSION="$MAJOR.$MINOR.$PATCH"
-          echo "::set-output name=version::$VERSION"
+          echo VERSION="$MAJOR.$MINOR.$PATCH"
 
       - name: Create or update version release
         id: create_version_release
@@ -44,13 +43,13 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag: ${{ steps.determine_version.outputs.version }}
-          title: Release ${{ steps.determine_version.outputs.version }}
+          tag: ${{ VERSION }}
+          title: Release ${{ VERSION }}
 
       - name: Push new tag
         run: |
-          git tag ${{ steps.determine_version.outputs.version }}
-          git push origin ${{ steps.determine_version.outputs.version }}
+          git tag ${{ VERSION }}
+          git push origin ${{ VERSION }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
