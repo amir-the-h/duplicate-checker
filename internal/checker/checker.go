@@ -30,21 +30,18 @@ func CheckDuplicates(dirPath string) (map[string][]string, error) {
 		return nil, err
 	}
 
-	// calculate the total time taken
 	fmt.Printf("Total number of files: %d\n", totalFiles)
-
 	bar := utils.ProgressBar(totalFiles, "Scanning files ...")
-
 	fileMap := make(map[string][]string)
 	fileMapMutex := sync.Mutex{} // Mutex to synchronize access to fileMap
-	// make a signal channel to let the application know when the goroutines are done
-	signal := make(chan bool)
+	signal := make(chan bool)    // make a signal channel to let the application know when the goroutines are done
 	err = filepath.Walk(dirPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
 		if !info.IsDir() {
+			// run a goroutine to calculate the hash of the file
 			go func() {
 				fileHash, err := utils.CalculateMD5Hash(path)
 				if err != nil {
@@ -76,9 +73,7 @@ func CheckDuplicates(dirPath string) (map[string][]string, error) {
 	bar.Finish()
 	fmt.Println()
 
-	// Create a new progress bar for comparing files
 	bar = utils.ProgressBar(len(fileMap), "Comparing files ...")
-	// check each hash for more than one file
 	duplicates := make(map[string][]string)
 	for hash, files := range fileMap {
 		// run a goroutine to compare the files
@@ -86,8 +81,6 @@ func CheckDuplicates(dirPath string) (map[string][]string, error) {
 			if len(files) > 1 {
 				// sort the files by oldest first
 				utils.SortFilesByDate(&files)
-				// each key is the hash of the file
-				// each value is a list of files with the same hash
 				duplicates[hash] = files
 			}
 			bar.Add(1)
