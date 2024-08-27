@@ -44,6 +44,7 @@ jobs:
           release_name: Release ${{ steps.determine_version.outputs.version }}
           draft: false
           prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check if latest release exists
         id: check_latest_release
@@ -65,6 +66,7 @@ jobs:
           release_name: Latest Release
           draft: false
           prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update latest release
         if: steps.check_latest_release.outputs.exists == 'true'
